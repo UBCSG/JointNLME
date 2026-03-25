@@ -48,12 +48,10 @@ est_randeff_by_hlike <- function(RespLog, sub_dataList,
   
   if (naive == FALSE){
     sub_dataList[[3]]$fitted_CD4 <- eval_fn_row(Object_CD4$reg_equation, sub_dataList[[3]], c(par_val, str_Bi), get_gradient = F)
-    # str_Ti <- exp(par_val$omega1 * str_Bi$tau2i + par_val$omega2 * max(sub_dataList[[3]]$fitted_CD4))
     lower_new <- c(rep(-Inf, q), sub_dataList[[4]]$last_decayobs)
     upper_new <- c(rep(Inf, q), sub_dataList[[4]]$first_reboundobs - sub_dataList[[4]]$treatment_stop)
     str_Ti <- upper_new[q + 1] * 0.5
   } else{
-    # str_Ti <- exp(par_val$omega1 * str_Bi$tau2i + par_val$omega2 * sub_dataList[[3]]$maxCD4_obs)
     lower_new <- c(rep(-Inf, q), sub_dataList[[3]]$last_decayobs)
     upper_new <- c(rep(Inf, q), sub_dataList[[3]]$first_reboundobs - sub_dataList[[3]]$treatment_stop)
     str_Ti <- upper_new[q + 1] * 0.5
@@ -124,5 +122,4 @@ est_randeff <- function(uniqueID,
   names(Ti_df) <- c(subject_id, "Ti0_sim")
   
   list(Bi_df = Bi_df, Bi_df_center = Bi_df_center, Ti_df = Ti_df)
-  # list(Bi_df = Bi_df, Bi_df_center = Bi_df_center)
 }

@@ -28,7 +28,6 @@ optim_iterate_rand <- function(str_val, ff, par_val, gr = NULL, lower = -Inf, up
     error_mess <- "try-error"
     for(method in methods){
       if("try-error" %in% error_mess | !converged){
-        # cat(method, "is used.", '\n')
         result <- try(optimx::optimx(par = str_val0, fn = ff, gr = gr,
                                      lower = lower, upper = upper, method = method,
                                      itnmax = 100,
@@ -78,7 +77,6 @@ optim_iterate_rand <- function(str_val, ff, par_val, gr = NULL, lower = -Inf, up
     list(gamma = str_val2, fval = result$value)
   } else {
     stop("Failed to converge ...")
-    # list(gamma = rep(NA, length(str_val)), fval = NA)
   }
 }
 
@@ -96,14 +94,11 @@ optim_iterate_fix <- function(str_val, ff, gr = NULL, lower = -Inf, upper = Inf,
   converged <- FALSE
   M <- 0
   str_val0 <- str_val
-  # print(ff(str_val0))
-  # print(gr(str_val0))
-  
+
   while( !converged & M < 100){
     error_mess <- "try-error"
     for(method in methods){
       if("try-error" %in% error_mess | !converged){
-        # cat(method, "is used.", '\n')
         result <- try(optimx::optimx(par = str_val0, fn = ff, gr = gr,
                                      lower = lower, upper = upper, method = method,
                                      itnmax = 500,
@@ -120,13 +115,6 @@ optim_iterate_fix <- function(str_val, ff, gr = NULL, lower = -Inf, upper = Inf,
             converged <- FALSE
           } else {
             str_val2 <- as.numeric(result[1:length(str_val)])
-            # if(is.null(gr)){
-            #   final_gr <- num_gradient(str_val2, ff, ...)
-            #   print(final_gr)
-            # } else{
-            #   final_gr <- gr(str_val2, ...)
-            # }
-            # converged <- ifelse(sum(is.na(final_gr)) > 0, FALSE, max(abs(final_gr)) < gr_tol)
             converged=TRUE
           }
         }
@@ -184,28 +172,16 @@ optim_iterate_nlminb <- function(str_val, ff, gr = NULL, lower = -Inf, upper = I
                                         trace = check),
                          lower = lower, upper = upper), silent = T)
     error_mess <- attr(result, "class")
-    # print(result)
 
 
     if("try-error" %in% error_mess){
       converged <- FALSE
       print(result)
     } else {
-      # print(result)
-      # print(num_gradient(result$par, ff, ...))
-      # print(final_gr <- gr(result$par, ...))
       if(result$convergence != 0){
         converged <- FALSE
       } else {
         str_val2 <- result$par
-
-        # if(is.null(gr)){
-        #   final_gr <- num_gradient(str_val2, ff, ...)
-        #   print(final_gr)
-        # } else{
-        #   final_gr <- gr(str_val2, ...)
-        # }
-        # converged <- ifelse(sum(is.na(final_gr)) > 0, FALSE, max(abs(final_gr)) < gr_tol)
         converged <- TRUE
       }
     }
@@ -251,15 +227,8 @@ optim_iterate_lbfgs <- function(str_val, ff, gr, lower = -Inf, upper = Inf, chec
                                      control = list(trace = 1 - check),
                                      ...), silent = T)
 
-    # result <- try(optim(par = str_val0, fn = ff, gr = gr,
-    #                     method = "L-BFGS-B",
-    #                     lower = lower, upper = upper, hessian = FALSE,
-    #                     control = list(trace = 1, REPORT = 1)), silent = T)
 
     error_mess <- attr(result, "class")
-    # print(error_mess)
-    # print(result)
-    # print(final_gr <- gr(result$par, ...))
 
     if("try-error" %in% error_mess){
       converged <- FALSE
@@ -268,13 +237,6 @@ optim_iterate_lbfgs <- function(str_val, ff, gr, lower = -Inf, upper = Inf, chec
         converged <- FALSE
       } else {
         str_val2 <- result$par
-        # if(is.null(gr)){
-        #   final_gr <- num_gradient(str_val2, ff, ...)
-        #   print(final_gr)
-        # } else{
-        #   final_gr <- gr(str_val2, ...)
-        # }
-        # converged <- ifelse(sum(is.na(final_gr)) > 0, FALSE, max(abs(final_gr)) < gr_tol)
         converged <- TRUE
       }
     }
@@ -298,19 +260,3 @@ optim_iterate_lbfgs <- function(str_val, ff, gr, lower = -Inf, upper = Inf, chec
   }
 }
 
-# TODO: May consider parallel version
-# Note: Using optimParallel with n parallel processes increases the
-# memory usage by about factor n compared to a call to optim. If the
-# memory limit is reached this may severely slowdown the optimization.
-# cl <- parallel::makeCluster(3)
-# parallel::setDefaultCluster(cl = cl)
-# parallel::clusterEvalQ(cl, devtools::load_all())
-# parallel::clusterExport(cl, c("RespLog", "sub_long", "sub_surv",
-#                               "random_effects", "invSIGMA", "par_val",
-#                               "distribution", "degree", "q",
-#                               "gr_long", "gr_surv"))
-# result <- try(optimParallel::optimParallel(par = bval, fn = ff, gr = gr,
-#                     control = list(maxit = 100, trace = 0),
-#                     parallel=list(forward = TRUE, loginfo = TRUE)), silent = T)
-# parallel::setDefaultCluster(cl = NULL)
-# parallel::stopCluster(cl)

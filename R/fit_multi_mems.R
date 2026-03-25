@@ -64,7 +64,6 @@ fit_multi_mems <- function(memList, dataList, subject_id,
                                 degree = randeff_info$degree,
                                 Silent = Silent, Scale = (cov_method == "spherical"), 
                                 mc.cores = 1, naive)
-    # saveRDS(BiTi_df_list, "BiTi_df_list.RDS")
     
     Bi_df <- BiTi_df_list$Bi_df_center
     Ti_df <- BiTi_df_list$Ti_df
@@ -95,7 +94,7 @@ fit_multi_mems <- function(memList, dataList, subject_id,
     ################################################
     # Non-robust estimate of fixed parameters
     cat("# Estimating fixed parameters")
-    new_fixed_param <- est_fixeff_sim(param = fixed_param,
+    new_fixed_param <- est_fixeff(param = fixed_param,
                                  other_param = disp_param,
                                  lower = fixed_param_info$lower,
                                  upper = fixed_param_info$upper,
@@ -108,11 +107,10 @@ fit_multi_mems <- function(memList, dataList, subject_id,
                                   Silent = Silent, naive, adjust)
     
     cat("\n")
-    # cat("fixed:", round(new_fixed_param, 3), '\n')
     
     # # Non-robust estimate of dispersion parameters
     cat("# Estimating dispersion parameters ...")
-    res_disp <- est_disp_new(param = disp_param,
+    res_disp <- est_disp(param = disp_param,
                              other_param = new_fixed_param,
                              RespLog,
                              new_dataList, Bi_df, invSIGMA = invSIGMA, 
@@ -129,9 +127,6 @@ fit_multi_mems <- function(memList, dataList, subject_id,
     cat("\n")
     new_disp_param <- res_disp$disp_param
     new_invSIGMA <- res_disp$invSIGMA
-    
-    # cat("disp:", round(new_disp_param, 3), '\n')
-    # print(solve(new_invSIGMA) %>% round(3))
 
     
     ####################################################
@@ -202,26 +197,12 @@ fit_multi_mems <- function(memList, dataList, subject_id,
 
   fixed_param_sd <- NULL
   if(convergence == 0){
-    # fixed_param_sd <- get_sd(fixed_param, random_effects,  other_param = disp_param,
-    #                          RespLog, new_dataList, Bi_df, invSIGMA, T_end, last_decayobs,
-    #                          # disp_pars,
-    #                          Hmats2,
-    #                          all_glmeObjects = memList,
-    #                          distribution = randeff_info$distribution,
-    #                          degree = randeff_info$degree)
-    fixed_param_sd <- get_sd_hlike_new(fixed_param, random_effects,  other_param = disp_param,
+    fixed_param_sd <- get_sd_hlike(fixed_param, random_effects,  other_param = disp_param,
                              RespLog, new_dataList, Bi_df, invSIGMA, 
                              disp_pars, 
                              all_glmeObjects = memList,
                              distribution = randeff_info$distribution,
                              degree = randeff_info$degree, naive)
-    # fixed_param_sd <- get_sd_hlike(fixed_param, random_effects,  other_param = disp_param,
-    #                                    RespLog, new_dataList, Bi_df, invSIGMA, T_end, last_decayobs,
-    #                                    disp_pars,
-    #                                    Hmats3,
-    #                                    all_glmeObjects = memList,
-    #                                    distribution = randeff_info$distribution,
-    #                                    degree = randeff_info$degree)
     
     print("Estimates of fixed parameters SD:")
     print(round(unlist(fixed_param_sd), 4))

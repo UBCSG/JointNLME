@@ -19,7 +19,7 @@ sapply(file.sources, source, .GlobalEnv)
 raw_data <- read.csv(here::here("Data", "raw_data.csv"), header = TRUE)
 
 # Remove observations missing seroconversion date or viral RNA
-data <- raw_data %>%
+data_all <- raw_data %>%
   filter(!is.na(days_from_seroco), !is.na(RNA_V)) %>%
   mutate(
     log_cd4           = log(CD4_V),                                  # NA preserved automatically
@@ -36,14 +36,14 @@ data <- raw_data %>%
   arrange(PATIENT, time_days)
 
 # Attach each patient's peak CD4 value (used downstream)
-max_cd4 <- data %>%
+max_cd4 <- data_all %>%
   filter(!is.na(log_cd4)) %>%
   group_by(PATIENT) %>%
   slice_max(log_cd4, n = 1, with_ties = FALSE) %>%
   ungroup() %>%
   dplyr::select(PATIENT, time_log_cd4_max = days_from_seroco, log_cd4_max = log_cd4)
 
-data <- data %>%
+data_all <- data_all %>%
   left_join(max_cd4, by = "PATIENT") %>%
   mutate(last_decayobs = 0)
 
@@ -84,7 +84,7 @@ outliers_threshold <- tribble(
 # Patients excluded entirely (no usable data after review)
 patients_excluded <- c(4, 26, 27, 41, 62, 71)
 
-data <- data %>%
+data <- data_all %>%
   anti_join(outliers_exact, by = c("PATIENT", "time_days")) %>%
   anti_join(outliers_threshold %>%
               dplyr::rename(threshold = max_days) %>%
@@ -151,8 +151,10 @@ data_rebound <- data %>%
          censor_rebound   = censor,
          treatment_stop   = treatment_stop_years)
 
-data_cd4_out <- data_cd4 %>%
-  dplyr::select(PATIENT, time_CD4, y_CD4, y_logCD4)
+data_cd4 <- data_all %>%
+  dplyr::select(PATIENT, time_years, CD4_V, log_cd4) %>% 
+  filter(!is.na(log_cd4))
+colnames(data_cd4)[2:4] <- c("time_CD4", "y_CD4", "y_logCD4")
 
 # One row per patient: transition-window summary for the rebound model
 data_trans <- data_rebound %>%
@@ -164,5 +166,5 @@ data_trans <- data_rebound %>%
 
 write.csv(data_decay,   here::here("Data", "cleaned_data_decay.csv"),   row.names = FALSE)
 write.csv(data_rebound, here::here("Data", "cleaned_data_rebound.csv"), row.names = FALSE)
-write.csv(data_cd4_out, here::here("Data", "cleaned_data_cd4.csv"),     row.names = FALSE)
+write.csv(data_cd4, here::here("Data", "cleaned_data_cd4.csv"),     row.names = FALSE)
 write.csv(data_trans,   here::here("Data", "cleaned_data_trans.csv"),   row.names = FALSE)

@@ -1,11 +1,10 @@
 get_sd_hlike <- function(fixed_param, random_effects,
                          other_param,
                          RespLog, new_dataList,
-                         Bi_df, invSIGMA, T_end, last_decayobs,
+                         Bi_df, invSIGMA, 
                          disp_pars, 
-                         Hmats3,
                          all_glmeObjects,
-                         distribution = "normal", degree = 0){
+                         distribution = "normal", degree = 0, naive){
   
   subject_id <- names(Bi_df)[1]
   random_effects <- names(Bi_df)[-1]
@@ -13,15 +12,15 @@ get_sd_hlike <- function(fixed_param, random_effects,
   n <- nrow(Bi_df)
   p <- length(fixed_param)
   uniqueID <- Bi_df[ ,1]
-  # Hmats <- disp_pars$Hmats
   par_val <- c(fixed_param, other_param)
+  Hmats <- disp_pars$Hmats
   
   # Derive -H matrix, where H is defined in the adjusted profile h-likelihood
   
   # evaluate the -H matrix for the random effects part
   if(distribution == "normal"){
     negH3 <- lapply(1:n, function(i){
-      -invSIGMA %>% Matrix::bdiag(., diag(0, p+1, p+1)) %>% as.matrix()
+      -invSIGMA %>% Matrix::bdiag(., diag(0, p, p)) %>% as.matrix()
     })
   } else if (distribution == "t-dist"){
     deno <- diag(as.matrix(Bi_df[, -1])%*%invSIGMA%*%t(Bi_df[, -1]))
@@ -36,52 +35,37 @@ get_sd_hlike <- function(fixed_param, random_effects,
   # To approximate -H by E(-H|b) for NLMEs
   # Ref: Maengseok Noh and Youngjo Lee, 2008, Hierarchical-likelihood approach for nonlinear mixed-effects models
   exp_dataList <- new_dataList
-  # for(i in 1:length(new_dataList)){
-  #   for(j in 1:length(all_glmeObjects[[i]])){
-  #     exp_dataList[[i]][all_glmeObjects[[i]][[j]]$response] <-
-  #       eval_fn_row(all_glmeObjects[[i]][[j]]$reg_equation, new_dataList[[i]], par_val, get_gradient = F)
-  #   }
-  # }
-  # hhh <- lapply(1:length(Hmats), function(i){
-  #   evalMat_row(Hmats[[i]], exp_dataList[[i]], par_val) %>% as.data.frame() %>%
-  #     cbind(exp_dataList[[i]][subject_id], .)
-  # }) %>% do.call("rbind", .) %>%
-  #   aggregate( as.formula(paste(". ~", subject_id)), ., sum)
-  # 
-  # 
-  # B_mat <- NULL # matrix(0, n*q, n*q)
-  # C_mat <- c() # matrix(0, n*q, p)
-  # D_mat <- matrix(0, p, p)
-  # for(k in 1:n){
-  #   H_mat <- -(matrix(as.numeric(hhh[k, -1]), p+q, p+q) + negH3[[k]])
-  #   if(is.null(B_mat)){
-  #     B_mat <- H_mat[1:q, 1:q]
-  #   } else {
-  #     B_mat <- bdiag(B_mat, H_mat[1:q, 1:q])
-  #   }
-  #   C_mat <- rbind(C_mat, H_mat[1:q, (q+1):(q+p)])
-  #   D_mat <- D_mat + H_mat[(q+1):(p+q), (q+1):(p+q)]
-  # }
-  
+  par_val <- c(Vassign(names(fixed_param), fixed_param), Vassign(names(other_param), other_param))
+  if (naive == FALSE){
+    exp_dataList[[3]]$fitted_CD4 <- eval_fn_row(Object_CD4$reg_equation, exp_dataList[[3]], par_val, get_gradient = F)
+    max_CD4 <- exp_dataList[[3]] %>%
+      group_by(!!sym(subject_id)) %>%
+      filter(fitted_CD4 == max(fitted_CD4)) %>%
+      dplyr::select(!!sym(subject_id), fitted_CD4) 
+    colnames(max_CD4)[2] <- "maxCD4"
+    exp_dataList[[4]] <- exp_dataList[[4]] %>% dplyr::select(-tidyselect::one_of(c("maxCD4")))
+    exp_dataList[[4]] <- merge(exp_dataList[[4]], max_CD4)
+  }
+
   # evaluate the H matrix
-  hhh <- lapply(1:length(Hmats3), function(i){
-    evalMat_row(Hmats3[[i]], exp_dataList[[i]], par_val) %>% as.data.frame() %>%
+  hhh <- lapply(1:length(Hmats), function(i){
+    evalMat_row(Hmats[[i]], exp_dataList[[i]], par_val) %>% as.data.frame() %>%
       cbind(exp_dataList[[i]][subject_id], .)
   }) %>% do.call("rbind", .) %>%
     aggregate( as.formula(paste(". ~", subject_id)), ., sum)
   
   B_mat <- NULL # matrix(0, n*q, n*q)
   C_mat <- c() # matrix(0, n*q, p)
-  D_mat <- matrix(0, p+1, p+1)
+  D_mat <- matrix(0, p, p)
   for(k in 1:n){
-    H_mat <- -(matrix(as.numeric(hhh[k, -1]), p+q+1, p+q+1) + negH3[[k]])
+    H_mat <- -(matrix(as.numeric(hhh[k, -1]), p+q, p+q) + negH3[[k]])
     if(is.null(B_mat)){
       B_mat <- H_mat[1:q, 1:q]
     } else {
       B_mat <- bdiag(B_mat, H_mat[1:q, 1:q])
     }
-    C_mat <- rbind(C_mat, H_mat[1:q, (q+1):(q+p+1)])
-    D_mat <- D_mat + H_mat[(q+1):(p+q+1), (q+1):(p+q+1)]
+    C_mat <- rbind(C_mat, H_mat[1:q, (q+1):(q+p)])
+    D_mat <- D_mat + H_mat[(q+1):(p+q), (q+1):(p+q)]
   }
   
   Hval <- rbind(cbind(B_mat, C_mat), cbind(t(C_mat), D_mat))

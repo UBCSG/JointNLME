@@ -8,17 +8,6 @@ get_log_density <- function(model_object){
   }
 }
 
-#' #' Get joint log density function
-#' get_joint_density <- function(memList){
-#'   if(!is.null(memList)){
-#'     long_config <- lapply(memList, get_log_density_glm)
-#'     long_log_hlike <- lapply(long_config, function(x){x$log_density}) %>% paste(collapse = "+")
-#'   } else {
-#'     long_config <- long_log_hlike <- NULL
-#'   }
-#'   long_log_hlike
-#' }
-
 #' Get log density function of (generalized) linear model
 #'
 get_log_density_glm <- function(model_object){
@@ -62,7 +51,6 @@ get_log_density_glm <- function(model_object){
     Cresp <- model_object$left_censoring$indicator
 
     if(model_object$left_censoring$method == "tobit"){
-      # limit_val <- model_object$response
       limit_val <- model_object$left_censoring$limit_value
     } else if(model_object$left_censoring$method == "truncated"){
       stopifnot(!is.null(model_object$left_censoring$limit_value))
@@ -102,16 +90,6 @@ get_log_density_ph <- function(model_object){
     
   } else if(model_object$distribution == "weibull"){
     # Weibull PH model
-    # log_density <- paste(model_object$event, "*( Wlogscale+log(Wshape)+log(",
-    #                      model_object$response, ")*(Wshape-1) +",
-    #                      model_object$reg_equation, ") - exp(Wlogscale+",
-    #                      model_object$reg_equation, ")*",
-    #                      model_object$response, "^Wshape")
-    # log_density <- paste(model_object$event, "*( log(Wscale)+log(Wshape)+log(",
-    #                      model_object$response, ")*(Wshape-1) +",
-    #                      model_object$reg_equation, ") - exp(log(Wscale) + ",
-    #                      model_object$reg_equation, ")*",
-    #                      model_object$response, "^Wshape")
     log_density <- paste(model_object$event, "*( log(Wscale)+log(Wshape)+log(",
                          model_object$response, ")*(Wshape-1) +",
                          model_object$reg_equation, ") - exp(",
@@ -128,24 +106,6 @@ get_log_density_ph <- function(model_object){
     log_density <- paste("-log(", model_object$response,") - 0.5*(log(", model_object$response, ") - (",
                          model_object$reg_equation, "))^2/",
                          sigma, "^2-log(", sigma, ")-0.5*log(2*pi) - log(", upperint, ")")
-    #   upper_bound <- paste("( log(", model_object$truncated$upper, ") - (",
-    #                        model_object$reg_equation, "))/", sigma)
-    #   upperint <- paste("1/(1+exp(-1.702*", upper_bound, "))")
-    #   lower_bound <- paste("( log(", model_object$truncated$lower, ") - (",
-    #                        model_object$reg_equation, "))/", sigma)
-    #   lowerint <- paste("1/(1+exp(-1.702*", lower_bound, "))")
-    # if (model_object$truncated$lower == 0){
-    #   upper_bound <- paste("( log(", model_object$truncated$upper, "- ", model_object$truncated$lower, ") - (",
-    #                        model_object$reg_equation, "))/", sigma)
-    #   upperint <- paste("1/(1+exp(-1.702*", upper_bound, "))")
-    #   log_density <- paste("-log(", model_object$response,") - 0.5*(log(", model_object$response, ") - (",
-    #                        model_object$reg_equation, "))^2/",
-    #                        sigma, "^2-log(", sigma, ")-0.5*log(2*pi) - log(", upperint, ")")
-    # } else{
-    #   log_density <- paste("-log(", model_object$response,") - 0.5*(log(", model_object$response, ") - (",
-    #                        model_object$reg_equation, "))^2/",
-    #                        sigma, "^2-log(", sigma, ")-0.5*log(2*pi) - log(", upperint ," - ", lowerint, ")")
-    # }
 
     additional_param <- c(additional_param, sigma)
   }

@@ -35,28 +35,6 @@ approx_log_like <- function(RespLog, par_val, new_dataList, Bi_df,invSIGMA,
     }
     exp_dataList[[3]][all_glmeObjects[[3]]$response] <- exp(exp_dataList[[3]][all_glmeObjects[[3]]$response])
   }
- 
-  
-  # exp_dataList <- lapply(dataList, function(dat){
-  #   dat <- dplyr::left_join(dplyr::select(dat, - tidyselect::one_of(random_effects)), Bi_df, by = subject_id)
-  # })
-  # exp_dataList[[4]] <- new_dataList[[4]]
-  # exp_dataList[1:2] <-  lapply(exp_dataList[1:2], function(dat){
-  #   dat <- dplyr::left_join(dat, exp_dataList[[4]] %>% dplyr::select(c(!!sym(subject_id), time)), by = subject_id)
-  # })
-  # exp_dataList[[1]] <- exp_dataList[[1]] %>%
-  #   filter(time_decay <= time)
-  # exp_dataList[[2]] <- exp_dataList[[2]] %>%
-  #   filter(time_rebound > time) %>%
-  #   mutate(time_rebound = time_rebound - time)
-  
-  # for(j in 1:length(all_glmeObjects)){
-  #   exp_dataList[[j]][all_glmeObjects[[j]]$response] <-
-  #     eval_fn_row(all_glmeObjects[[j]]$reg_equation, exp_dataList[[j]], par_val, get_gradient = F)
-  # }
-  # exp_dataList[[4]][all_glmeObjects[[4]]$response] <- exp(exp_dataList[[4]][all_glmeObjects[[4]]$response])
-  # exp_dataList[[4]] %>%
-  #   filter(time < last_decayobs | time > first_reboundobs)
   
   hhh <- lapply(1:length(Hmats), function(i){
     evalMat_row(Hmats[[i]], exp_dataList[[i]], par_val) %>% as.data.frame() %>%
