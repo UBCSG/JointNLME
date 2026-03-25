@@ -237,7 +237,7 @@ fit_multi_mems <- function(memList, dataList, subject_id,
                  convergence = convergence,
                  loglike_value = loglike_value,
                  RespLog = RespLog,
-                 dataList = new_dataList,
+                 dataList = dataList,
                  memList = memList,
                  subject_id = subject_id,
                  randeff_info = randeff_info)
